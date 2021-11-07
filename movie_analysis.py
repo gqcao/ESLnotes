@@ -68,10 +68,41 @@ class AnalyzeMovies():
         plt.title("Years of Movie Release")
         plt.savefig("plots/movie_year.jpg", dpi=150)
         #plt.show()
+    
+    def _show_rating_distr(self, ratings):
+        bins = list(np.arange(6, 9.1, .5))
+        bins.insert(0, 2)  # Add a very low 2 points in the front of the bins..
+        binned_data = pd.cut(ratings, bins=bins, include_lowest=True)
+        fig, ax = plt.subplots()
+        ax = binned_data.value_counts(sort=False).plot.bar(rot=0, color="g", figsize=(9,7))
+        ax.set_xticklabels(["<6", "6.0-6.5", "6.5-7.0", "7.0-7.5", "7.5-8.0", "8.0-8.5", "8.5-9.0"])
+        ax.set_xlabel("Ratings")
+        ax.set_ylabel("Number of movies")
+        self._label_barplots(ax)   # put the values on top of each bar..
+        plt.title("IMDb Ratings")
+        plt.savefig("plots/movie_rating.jpg", dpi=150)
+        #plt.show()
+   
+    def _print_good_movies(self, movie_info_df):
+        good_movies = movie_info_df[movie_info_df["Rating"] > 8]["Title"].tolist()
+        print("\n")
+        print("Good movies:")
+        print(good_movies)
+        good_recent_movies = movie_info_df[(movie_info_df["Rating"] > 8) & (movie_info_df["Year"] > 1990)]["Title"].tolist()
+        print("\n")
+        print("Good recent movies:")
+        print(good_recent_movies)
+        print("\n")
+        outstanding_movies = movie_info_df[movie_info_df["Rating"] > 8.5]["Title"].tolist()
+        print("\n")
+        print("Outstanding movies:")
+        print(outstanding_movies)
 
     def analyze_movies(self, movie_info):
         movie_info_df = pd.read_csv(movie_info)
-        self._show_year_distr(movie_info_df["Year"])
+        #self._show_year_distr(movie_info_df["Year"])
+        #self._show_rating_distr(movie_info_df["Rating"])
+        self._print_good_movies(movie_info_df)
 
 if __name__=="__main__":
     movie_list = "data/eslnotes_movie_list.txt"
