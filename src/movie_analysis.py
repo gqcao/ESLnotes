@@ -15,15 +15,6 @@ class MovieAnalyzer():
     def __init__(self, movie_list):
         self._movie_list = movie_list
 
-    def _loadstr(self, filename, converter=str):
-        return [converter(c.strip()) for c in open(filename).readlines()]
-
-    def _writestr(self, filename, texts):
-        with open(filename, 'w') as outfile:
-            for i in range(len(texts)):
-                line = str(texts[i]) + '\n'
-                outfile.write(line)
-    
     def _get_person_name(self, persons):
         if persons is None:
             return None
@@ -45,10 +36,10 @@ class MovieAnalyzer():
         return movies[0]
 
     def get_movie_info(self):
-        movie_list = self._loadstr(self._movie_list)
+        movie_names = self._loadstr(self._movie_list)
         movie_info_df = pd.DataFrame(columns=["IMDb_ID", "Title", "Directors", "Cast", "Year", "Rating", "Genre", "Top 250 Rank", "Runtimes"])
         plots = []
-        for idx, movie_name in enumerate(movie_list):
+        for idx, movie_name in enumerate(movie_names):
             print("progress idx: " + str(idx))
             movie = self._find_right_movie(ia.search_movie(movie_name), movie_name)
             movie_imdb_info = ia.get_movie(movie.movieID)
