@@ -165,19 +165,34 @@ class MovieAnalyzer():
 
     def analyze_movies(self, movie_info):
         movie_info_df = pd.read_csv(movie_info)
-        #self._show_year_distr(movie_info_df["Year"])
-        #self._show_rating_distr(movie_info_df["Rating"])
+        self._show_year_distr(movie_info_df["Year"])
+        self._show_rating_distr(movie_info_df["Rating"])
         #self._print_good_movies(movie_info_df)
-        #self._show_genres(movie_info_df["Genre"])
+        self._show_genres(movie_info_df["Genre"])
         self._runtime_distr(movie_info_df)
+
+class NetflixProcessor():
+    def __init__(self, data_path):
+        self._data_path = data_path
+
+    def extract_movie_titles(self):
+        data = pd.read_csv(self._data_path)
+        movie_titles_df = data[(data["type"] == "Movie") & (data["country"] == "United States")]
+        movie_titles_df.to_csv("data/netflix_movies.csv", index=False)
 
 def analyze_eslnotes():
     # Analyze movies from eslnotes
     movie_list = "data/eslnotes_movie_list.txt"
     movie_info = "data/eslnotes_movie_info.csv"
     eslnotes_analyzer = MovieAnalyzer(movie_list)
-    eslnotes_analyzer.get_movie_info()
-    #eslnotes_analyzer.analyze_movies(movie_info)
+    #eslnotes_analyzer.get_movie_info()
+    eslnotes_analyzer.analyze_movies(movie_info)
+
+def analyze_netflix():
+    data_path = "data/netflix_titles.csv"
+    processor = NetflixProcessor(data_path)
+    processor.extract_movie_titles()
 
 if __name__=="__main__":
-    analyze_eslnotes()
+    #analyze_eslnotes()
+    analyze_netflix()
