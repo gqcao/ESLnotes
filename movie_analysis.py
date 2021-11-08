@@ -18,6 +18,12 @@ class MovieAnalyzer():
     def _loadstr(self, filename, converter=str):
         return [converter(c.strip()) for c in open(filename).readlines()]
 
+    def _writestr(self, filename, texts):
+        with open(filename, 'w') as outfile:
+            for i in range(len(texts)):
+                line = str(texts[i]) + '\n'
+                outfile.write(line)
+    
     def _get_person_name(self, persons):
         if persons is None:
             return None
@@ -27,28 +33,42 @@ class MovieAnalyzer():
                 names = names + person["name"] + ";"
             return names
 
+    def _find_right_movie(self, movies, orig_movie_name):
+        if movies[0]["title"] != orig_movie_name:
+            print("Original name: " + orig_movie_name)
+            for idx, movie in enumerate(movies):
+                print("Movie number: ", idx)
+                print(movie.get("title"))
+                print(movie.get("year"))
+            chose_idx = int(input("Choosing movie idx: "))
+            return movies[chose_idx]
+        return movies[0]
+
     def get_movie_info(self):
-        movie_list = loadstr(self.movie_list)
+        movie_list = self._loadstr(self._movie_list)
         movie_info_df = pd.DataFrame(columns=["IMDb_ID", "Title", "Directors", "Cast", "Year", "Rating", "Genre", "Top 250 Rank", "Runtimes"])
+        plots = []
         for idx, movie_name in enumerate(movie_list):
-            print(idx)
-            movie = ia.search_movie(movie_name)[0]
+            print("progress idx: " + str(idx))
+            movie = self._find_right_movie(ia.search_movie(movie_name), movie_name)
             movie_imdb_info = ia.get_movie(movie.movieID)
             movie_row = {}
             movie_row["IMDb_ID"] = movie_imdb_info.get("imdbID")
             movie_row["Title"] = movie_imdb_info.get("title")
-            movie_row["Directors"] = get_person_name(movie_imdb_info.get("directors"))
-            movie_row["Cast"] = get_person_name(movie_imdb_info.get("cast"))
+            movie_row["Directors"] = self._get_person_name(movie_imdb_info.get("directors"))
+            movie_row["Cast"] = self._get_person_name(movie_imdb_info.get("cast"))
             movie_row["Year"] = movie_imdb_info.get("year")
             movie_row["Rating"] = movie_imdb_info.get("rating")
             movie_row["Genre"] = ";".join(movie_imdb_info.get("genre"))
             movie_row["Top 250 Rank"] = movie_imdb_info.get("top 250 rank")
+            plots.append(movie_imdb_info.get("plot outline"))
             if movie_imdb_info.get("runtimes"):
                 movie_row["Runtimes"] = movie_imdb_info.get("runtimes")[0]
             else:
                 movie_row["Runtimes"] = None
             movie_info_df = movie_info_df.append(movie_row, ignore_index=True)
-        movie_info_df.to_csv("eslnotes_movie_info.csv", index=False)
+        movie_info_df.to_csv("data/eslnotes_movie_info.csv", index=False)
+        self._writestr("data/elnotes_plots.txt", plots)
 
     def _label_barplots(self, ax):
         for p in ax.patches:
@@ -156,8 +176,8 @@ def analyze_eslnotes():
     movie_list = "data/eslnotes_movie_list.txt"
     movie_info = "data/eslnotes_movie_info.csv"
     eslnotes_analyzer = MovieAnalyzer(movie_list)
-    #eslnotes_analyzer.get_movie_info(movie_list)
-    eslnotes_analyzer.analyze_movies(movie_info)
+    eslnotes_analyzer.get_movie_info()
+    #eslnotes_analyzer.analyze_movies(movie_info)
 
 if __name__=="__main__":
     analyze_eslnotes()
