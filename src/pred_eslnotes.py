@@ -1,23 +1,11 @@
 #!/bin/python
-from common import loadstr, save2svm, get_sentence_model
+from common import loadstr, writestr, save2svm, get_sentence_model, normalize_feature
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.datasets import load_svmlight_file
 import pandas as pd
+from sklearn.ensemble import IsolationForest
+import numpy as np
 from pdb import set_trace
-
-class PredictESLnotes:
-    def compute_similarity(self, s1, s2):
-        #Sentences are encoded by calling model.encode()
-        model = get_sentence_model()
-        #Compute embedding for both lists
-        embeddings1 = model.encode(s1, convert_to_tensor=True)
-        embeddings2 = model.encode(s2, convert_to_tensor=True)
-
-        #Compute cosine-similarits
-        cosine_scores = cosine_similarity(embeddings1, embeddings2)
-
-        #Output the pairs with their score
-        for i in range(len(s1)):
-            print("{} \t\t {} \t\t Score: {:.4f}".format(s1[i], s2[i], cosine_scores2[i][i]))
 
 class FeatureGenerator():
     def __init__(self, movie_names):
@@ -30,18 +18,23 @@ class FeatureGenerator():
             features.append(model.encode(sentence, convert_to_tensor=True))
         save2svm("../data/feature.txt", features, self._movie_names)
 
-def test():
-    pe = PredictESLnotes()
-    # Two lists of sentences
-    s1 = ['The cat sits outside',
-                 'A man is playing guitar',
-                 'The new movie is awesome']
+class MovieIdentifier(): 
+    def __init__(self, trn_feature_filename, tst_feature_filename, tst_movie_filename):
+        self._trn_feature_filename  = trn_feature_filename
+        self._tst_feature_filename  = tst_feature_filename
+        self._tst_movie_filename    = tst_movie_filename
 
-    s2 = ['The dog plays in the garden',
-                  'A woman watches TV',
-                  'The new movie is so great']
-
-    pe.compute_similarity(s1, s2)
+    def find_similar_movies(self):
+        """Build a one-class classifier to determine whether new movies belong to the same cluster.
+        """
+        trn_features, trn_labels    = load_svmlight_file(self._trn_feature_filename)
+        trn_features                = normalize_feature(trn_features.toarray())  # Normalize the feature 
+        tst_features, tst_labels    = load_svmlight_file(self._tst_feature_filename)
+        tst_features                = normalize_feature(tst_features.toarray())  # Normalize the feature
+        oneclass_model              = IsolationForest(n_estimators=5, random_state=0).fit(trn_features)
+        tst_labels                  = oneclass_model.predict(tst_features)
+        tst_movie_names             = pd.read_csv(self._tst_movie_filename)["title"]
+        writestr("../data/recommended_movies.txt", tst_movie_names.iloc[tst_labels == 1].tolist())
 
 def gen_ESLnotes_features():
     movie_list = "../data/eslnotes_movie_list.txt"
@@ -57,6 +50,14 @@ def gen_netflix_features():
     fg = FeatureGenerator(movie_names)
     fg.gen_sentence_feature(sentences)
 
+def recommend_new_eslnotes_movies():
+    trn_feature_filename    = "../data/eslnotes_feature.txt"
+    tst_feature_filename    = "../data/netflix_feature.txt"
+    tst_movie_filename      = "../data/netflix_movies.csv"
+    eslnotes_identifier     = MovieIdentifier(trn_feature_filename, tst_feature_filename, tst_movie_filename)
+    eslnotes_identifier.find_similar_movies()
+
 if __name__ == "__main__":
     #gen_ESLnotes_features()
-    gen_netflix_features()
+    #gen_netflix_features()
+    recommend_new_eslnotes_movies()

@@ -28,3 +28,9 @@ def get_sentence_model():
     from sentence_transformers import SentenceTransformer
     model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
     return model
+
+def normalize_feature(features):
+    # the feature is organized in NxD.
+    length      = np.sqrt((features**2).sum(axis=1))[:,None]
+    features    = features / length
+    return features

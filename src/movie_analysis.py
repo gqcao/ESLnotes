@@ -11,7 +11,7 @@ from sklearn.cluster import KMeans
 from sklearn.datasets import load_svmlight_file
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE 
-from common import loadstr, save2svm, get_sentence_model
+from common import loadstr, save2svm, get_sentence_model, normalize_feature
 from pdb import set_trace
 
 ia = IMDb()
@@ -164,9 +164,7 @@ class MovieAnalyzer():
     def _visualize_plot_features(self, K=5):
         # Cluster the plot features into groups 
         features, labels        = load_svmlight_file(self._feature_filename)
-        features                = features.toarray()
-        length                  = np.sqrt((features**2).sum(axis=1))[:,None]
-        features                = features / length
+        features                = normalize_feature(features.toarray())  # Normalize the feature 
         kmeans_model            = KMeans(K, random_state=0).fit(features)
         pred_labels             = kmeans_model.predict(features)
         transformed_features    = kmeans_model.transform(features)
@@ -217,7 +215,7 @@ class NetflixProcessor():
 
     def extract_movie_titles(self):
         data = pd.read_csv(self._data_path)
-        movie_titles_df = data[(data["type"] == "Movie") & (data["country"] == "United States")]
+        movie_titles_df = data[(data["type"] == "Movie") & (data["country"] == "United States") & (data["release_year"] > 2015)]
         movie_titles_df.to_csv("../data/netflix_movies.csv", index=False)
 
 def analyze_eslnotes():
@@ -230,10 +228,11 @@ def analyze_eslnotes():
     eslnotes_analyzer.analyze_movies()
 
 def process_netflix_file():
-    data_path = "data/netflix_titles.csv"
+    data_path = "../data/netflix_titles.csv"
     processor = NetflixProcessor(data_path)
     processor.extract_movie_titles()
 
 if __name__=="__main__":
-    analyze_eslnotes()
+    #analyze_eslnotes()
+    process_netflix_file()
     #analyze_netflix()
