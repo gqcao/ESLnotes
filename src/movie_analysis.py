@@ -10,6 +10,7 @@ sns.set_theme()
 from sklearn.cluster import KMeans
 from sklearn.datasets import load_svmlight_file
 from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE 
 from common import loadstr, save2svm, get_sentence_model
 from pdb import set_trace
 
@@ -160,14 +161,17 @@ class MovieAnalyzer():
         plt.savefig("plots/runtime.jpg", dpi=150)
         #plt.show()
 
-    def _visualize_plot_features(self, K=10):
+    def _visualize_plot_features(self, K=5):
         # Cluster the plot features into groups 
         features, labels        = load_svmlight_file(self._feature_filename)
+        features                = features.toarray()
+        length                  = np.sqrt((features**2).sum(axis=1))[:,None]
+        features                = features / length
         kmeans_model            = KMeans(K, random_state=0).fit(features)
         pred_labels             = kmeans_model.predict(features)
-        transformed_features    = kmeans_model.predict(features)
-        pca_model               = PCA.(n_components=2)
-        transformed_features_2d = pca_model.fit_predict(transformed_features)
+        transformed_features    = kmeans_model.transform(features)
+        pca_model               = PCA(n_components=2)
+        transformed_features_2d = pca_model.fit(transformed_features).transform(transformed_features)
 
         # Print out the grouped features
         movie_names = loadstr(self._movie_list)
@@ -187,26 +191,25 @@ class MovieAnalyzer():
 
         # Visualize the grouped features
         plt.figure()
-        colors = ["navy", "turquoise", "darkorange"]
+        colors = ["navy", "turquoise", "darkorange", "darkred", "chartreuse", "darkcyan", "darkviolet", "hotpink"]
         lw = 2
-
-        for color, i, target_name in zip(colors, [0, 1, 2], target_names):
+        for k in range(K):
             plt.scatter(
-                X_r[y == i, 0], X_r[y == i, 1], color=color, alpha=0.8, lw=lw, label=target_name
+                transformed_features_2d[pred_labels==k, 0], transformed_features_2d[pred_labels==k, 1], color=colors[k], alpha=0.8, lw=lw
             )
         plt.legend(loc="best", shadow=False, scatterpoints=1)
-        plt.title("PCA of IRIS dataset")
+        plt.title("2D Visualization of \"ESLNotes\" plots")
+        plt.savefig("../plots/eslnotes_clusters.jpg", dpi=150)
+        #plt.show()
 
     def analyze_movies(self):
-        """
         movie_info_df = pd.read_csv(self._movie_info)
         self._show_year_distr(movie_info_df["Year"])
         self._show_rating_distr(movie_info_df["Rating"])
         self._print_good_movies(movie_info_df)
         self._show_genres(movie_info_df["Genre"])
         self._runtime_distr(movie_info_df)
-        """
-        self._visualize_plot_features(5)
+        self._visualize_plot_features(8)
 
 class NetflixProcessor():
     def __init__(self, data_path):
