@@ -17,10 +17,14 @@ from pdb import set_trace
 ia = IMDb()
 
 class MovieAnalyzer():
-    def __init__(self, movie_list, movie_info, feature_filename):
-        self._movie_list        = movie_list
+    def __init__(self, movie_names, movie_info, feature_filename, release_years=None):
+        self._movie_names       = movie_names
         self._movie_info        = movie_info
         self._feature_filename  = feature_filename 
+        if release_years is None:
+            self._release_years = [None] * len(movie_names)
+        else:
+            self._release_years = release_years  
 
     def _get_person_name(self, persons):
         if persons is None:
@@ -31,24 +35,34 @@ class MovieAnalyzer():
                 names = names + person["name"] + ";"
             return names
 
-    def _find_right_movie(self, movies, orig_movie_name):
+    def _find_right_movie(self, movies, orig_movie_name, release_year=None):
+        if len(movies) == 0:
+            return None
         if movies[0]["title"] != orig_movie_name:
-            print("Original name: " + orig_movie_name)
-            for idx, movie in enumerate(movies):
-                print("Movie number: ", idx)
-                print(movie.get("title"))
-                print(movie.get("year"))
-            chose_idx = int(input("Choosing movie idx: "))
-            return movies[chose_idx]
+            if release_year:
+                for movie in movies:
+                    if movie.get("year") == release_year:
+                        return movie
+            else:
+                print("Original name: " + orig_movie_name)
+                for idx, movie in enumerate(movies):
+                    print("Movie number: ", idx)
+                    print(movie.get("title"))
+                    print(movie.get("year"))
+                chose_idx = int(input("Choosing movie idx: "))
+                return movies[chose_idx]
+            print("None found and use zero index..")
         return movies[0]
 
     def get_movie_info(self):
-        movie_names = loadstr(self._movie_list)
+        movie_names = self._movie_names 
         movie_info_df = pd.DataFrame(columns=["IMDb_ID", "Title", "Directors", "Cast", "Year", "Rating", "Genre", "Top 250 Rank", "Runtimes"])
         plots = []
-        for idx, movie_name in enumerate(movie_names):
+        for idx, (movie_name, release_year) in enumerate(zip(movie_names[635:640], self._release_years[635:640])):
             print("progress idx: " + str(idx))
-            movie = self._find_right_movie(ia.search_movie(movie_name), movie_name)
+            movie = self._find_right_movie(ia.search_movie(movie_name), movie_name, release_year)
+            if movie is None:
+                continue
             movie_imdb_info = ia.get_movie(movie.movieID)
             movie_row = {}
             movie_row["IMDb_ID"] = movie_imdb_info.get("imdbID")
@@ -57,7 +71,10 @@ class MovieAnalyzer():
             movie_row["Cast"] = self._get_person_name(movie_imdb_info.get("cast"))
             movie_row["Year"] = movie_imdb_info.get("year")
             movie_row["Rating"] = movie_imdb_info.get("rating")
-            movie_row["Genre"] = ";".join(movie_imdb_info.get("genre"))
+            if movie_imdb_info.get("genre"):
+                movie_row["Genre"] = ";".join(movie_imdb_info.get("genre"))
+            else:
+                movie_row["Genre"] = None 
             movie_row["Top 250 Rank"] = movie_imdb_info.get("top 250 rank")
             plots.append(movie_imdb_info.get("plot outline"))
             if movie_imdb_info.get("runtimes"):
@@ -65,8 +82,7 @@ class MovieAnalyzer():
             else:
                 movie_row["Runtimes"] = None
             movie_info_df = movie_info_df.append(movie_row, ignore_index=True)
-        movie_info_df.to_csv("data/eslnotes_movie_info.csv", index=False)
-        self._writestr("data/elnotes_plots.txt", plots)
+        return movie_info_df, plots
 
     def _label_barplots(self, ax):
         for p in ax.patches:
@@ -172,7 +188,6 @@ class MovieAnalyzer():
         transformed_features_2d = pca_model.fit(transformed_features).transform(transformed_features)
 
         # Print out the grouped features
-        movie_names = loadstr(self._movie_list)
         movie_info_df = pd.read_csv(self._movie_info)
         genres = movie_info_df["Genre"]
         groups = {}
@@ -221,10 +236,13 @@ class NetflixProcessor():
 def analyze_eslnotes():
     # Analyze movies from eslnotes
     movie_list          = "../data/eslnotes_movie_list.txt"
+    movie_names         = loadstr(movie_list)
     movie_info          = "../data/eslnotes_movie_info.csv"
     feature_filename    = "../data/eslnotes_feature.txt"
-    eslnotes_analyzer = MovieAnalyzer(movie_list, movie_info, feature_filename)
-    #eslnotes_analyzer.get_movie_info()
+    eslnotes_analyzer = MovieAnalyzer(movie_names, movie_info, feature_filename)
+    #movie_info_df,  plots = eslnotes_analyzer.get_movie_info()
+    #movie_info_df.to_csv("../data/eslnotes_movie_info.csv", index=False)
+    #writestr("../data/elnotes_plots.txt", plots)
     eslnotes_analyzer.analyze_movies()
 
 def process_netflix_file():
@@ -232,7 +250,18 @@ def process_netflix_file():
     processor = NetflixProcessor(data_path)
     processor.extract_movie_titles()
 
+def analyze_netflix():
+    # Analyze movies from eslnotes
+    movie_list          = "../data/netflix_movies.csv"
+    movie_names         = pd.read_csv(movie_list)["title"]
+    movie_info          = "../data/netflix_movies.csv"
+    feature_filename    = "../data/netflix_feature.txt"
+    release_years       = pd.read_csv(movie_list)["release_year"]
+    netflix_analyzer    = MovieAnalyzer(movie_names, movie_info, feature_filename, release_years)
+    movie_info_df, plots = netflix_analyzer.get_movie_info()
+    movie_info_df.to_csv("../data/netflix_movie_info.csv", index=False)
+
 if __name__=="__main__":
     #analyze_eslnotes()
-    process_netflix_file()
-    #analyze_netflix()
+    #process_netflix_file()
+    analyze_netflix()
