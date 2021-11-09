@@ -7,13 +7,19 @@ import matplotlib.pyplot as plt
 from collections import Counter
 import seaborn as sns
 sns.set_theme()
+from sklearn.cluster import KMeans
+from sklearn.datasets import load_svmlight_file
+from sklearn.decomposition import PCA
+from common import loadstr, save2svm, get_sentence_model
 from pdb import set_trace
 
 ia = IMDb()
 
 class MovieAnalyzer():
-    def __init__(self, movie_list):
-        self._movie_list = movie_list
+    def __init__(self, movie_list, movie_info, feature_filename):
+        self._movie_list        = movie_list
+        self._movie_info        = movie_info
+        self._feature_filename  = feature_filename 
 
     def _get_person_name(self, persons):
         if persons is None:
@@ -36,7 +42,7 @@ class MovieAnalyzer():
         return movies[0]
 
     def get_movie_info(self):
-        movie_names = self._loadstr(self._movie_list)
+        movie_names = loadstr(self._movie_list)
         movie_info_df = pd.DataFrame(columns=["IMDb_ID", "Title", "Directors", "Cast", "Year", "Rating", "Genre", "Top 250 Rank", "Runtimes"])
         plots = []
         for idx, movie_name in enumerate(movie_names):
@@ -154,13 +160,53 @@ class MovieAnalyzer():
         plt.savefig("plots/runtime.jpg", dpi=150)
         #plt.show()
 
-    def analyze_movies(self, movie_info):
-        movie_info_df = pd.read_csv(movie_info)
+    def _visualize_plot_features(self, K=10):
+        # Cluster the plot features into groups 
+        features, labels        = load_svmlight_file(self._feature_filename)
+        kmeans_model            = KMeans(K, random_state=0).fit(features)
+        pred_labels             = kmeans_model.predict(features)
+        transformed_features    = kmeans_model.predict(features)
+        pca_model               = PCA.(n_components=2)
+        transformed_features_2d = pca_model.fit_predict(transformed_features)
+
+        # Print out the grouped features
+        movie_names = loadstr(self._movie_list)
+        movie_info_df = pd.read_csv(self._movie_info)
+        genres = movie_info_df["Genre"]
+        groups = {}
+        for idx, name in enumerate(movie_names):
+            entry = name + ": " + genres[idx] 
+            if not groups.get(pred_labels[idx]):
+                groups[pred_labels[idx]] = [entry]
+            else:
+                groups[pred_labels[idx]].append(entry)
+        for idx in range(K):
+            print("Group", idx)
+            print(groups[idx])
+            print("\n")
+
+        # Visualize the grouped features
+        plt.figure()
+        colors = ["navy", "turquoise", "darkorange"]
+        lw = 2
+
+        for color, i, target_name in zip(colors, [0, 1, 2], target_names):
+            plt.scatter(
+                X_r[y == i, 0], X_r[y == i, 1], color=color, alpha=0.8, lw=lw, label=target_name
+            )
+        plt.legend(loc="best", shadow=False, scatterpoints=1)
+        plt.title("PCA of IRIS dataset")
+
+    def analyze_movies(self):
+        """
+        movie_info_df = pd.read_csv(self._movie_info)
         self._show_year_distr(movie_info_df["Year"])
         self._show_rating_distr(movie_info_df["Rating"])
-        #self._print_good_movies(movie_info_df)
+        self._print_good_movies(movie_info_df)
         self._show_genres(movie_info_df["Genre"])
         self._runtime_distr(movie_info_df)
+        """
+        self._visualize_plot_features(5)
 
 class NetflixProcessor():
     def __init__(self, data_path):
@@ -173,17 +219,18 @@ class NetflixProcessor():
 
 def analyze_eslnotes():
     # Analyze movies from eslnotes
-    movie_list = "../data/eslnotes_movie_list.txt"
-    movie_info = "../data/eslnotes_movie_info.csv"
-    eslnotes_analyzer = MovieAnalyzer(movie_list)
+    movie_list          = "../data/eslnotes_movie_list.txt"
+    movie_info          = "../data/eslnotes_movie_info.csv"
+    feature_filename    = "../data/eslnotes_feature.txt"
+    eslnotes_analyzer = MovieAnalyzer(movie_list, movie_info, feature_filename)
     #eslnotes_analyzer.get_movie_info()
-    eslnotes_analyzer.analyze_movies(movie_info)
+    eslnotes_analyzer.analyze_movies()
 
-def analyze_netflix():
+def process_netflix_file():
     data_path = "data/netflix_titles.csv"
     processor = NetflixProcessor(data_path)
     processor.extract_movie_titles()
 
 if __name__=="__main__":
-    #analyze_eslnotes()
-    analyze_netflix()
+    analyze_eslnotes()
+    #analyze_netflix()
