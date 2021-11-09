@@ -169,12 +169,12 @@ class NetflixProcessor():
     def extract_movie_titles(self):
         data = pd.read_csv(self._data_path)
         movie_titles_df = data[(data["type"] == "Movie") & (data["country"] == "United States")]
-        movie_titles_df.to_csv("data/netflix_movies.csv", index=False)
+        movie_titles_df.to_csv("../data/netflix_movies.csv", index=False)
 
 def analyze_eslnotes():
     # Analyze movies from eslnotes
-    movie_list = "data/eslnotes_movie_list.txt"
-    movie_info = "data/eslnotes_movie_info.csv"
+    movie_list = "../data/eslnotes_movie_list.txt"
+    movie_info = "../data/eslnotes_movie_info.csv"
     eslnotes_analyzer = MovieAnalyzer(movie_list)
     #eslnotes_analyzer.get_movie_info()
     eslnotes_analyzer.analyze_movies(movie_info)
