@@ -234,11 +234,12 @@ class NetflixProcessor():
         movie_titles_df = data[(data["type"] == "Movie") & (data["country"] == "United States") & (data["release_year"] > 2015)]
         movie_titles_df.to_csv("../data/netflix_movies.csv", index=False)
 
-    def find_highly_rated_movies(self):
-        movie_info_names = pd.read_csv("../data/netflix_movie_info.csv")["Title"].tolist()
-        orig_movie_titles = pd.read_csv("../data/netflix_movies.csv")["title"].tolist()
-        diff = set(movie_info_names).difference(set(orig_movie_titles))
-        print(diff)
+    def find_highly_rated_movies(self, rating_thresh=6.5):
+        movie_info                  = pd.read_csv("../data/netflix_movie_info.csv")
+        highly_rated_movies         = movie_info[movie_info["Rating"] > rating_thresh]
+        features, labels            = load_svmlight_file("../data/netflix_feature.txt")
+        highly_rated_movie_features = features[movie_info["Rating"] > rating_thresh, :]
+        return highly_rated_movies, highly_rated_movie_features
 
 def analyze_eslnotes():
     # Analyze movies from eslnotes
@@ -256,7 +257,11 @@ def process_netflix_file():
     data_path = "../data/netflix_titles.csv"
     processor = NetflixProcessor(data_path)
     #processor.extract_movie_titles()
-    processor.find_highly_rated_movies()
+    highly_rated_movies, highly_rated_movie_features = processor.find_highly_rated_movies(7)
+    highly_rated_movies["IMDb_ID"] = highly_rated_movies["IMDb_ID"].astype(int)
+    highly_rated_movies["Year"] = highly_rated_movies["Year"].astype(int)
+    highly_rated_movies.to_csv("../data/highly_rated_netflix_movie_info.csv", index=False)
+    save2svm("../data/highly_rated_netflix_feature.txt", highly_rated_movie_features.toarray(), highly_rated_movies["Title"].tolist())
 
 def analyze_netflix():
     # Analyze movies from eslnotes
@@ -271,5 +276,5 @@ def analyze_netflix():
 
 if __name__=="__main__":
     #analyze_eslnotes()
-    #process_netflix_file()
-    analyze_netflix()
+    process_netflix_file()
+    #analyze_netflix()
