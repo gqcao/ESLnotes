@@ -58,7 +58,7 @@ class MovieAnalyzer():
         movie_names = self._movie_names 
         movie_info_df = pd.DataFrame(columns=["IMDb_ID", "Title", "Directors", "Cast", "Year", "Rating", "Genre", "Top 250 Rank", "Runtimes"])
         plots = []
-        for idx, (movie_name, release_year) in enumerate(zip(movie_names[635:640], self._release_years[635:640])):
+        for idx, (movie_name, release_year) in enumerate(zip(movie_names, self._release_years)):
             print("progress idx: " + str(idx))
             movie = self._find_right_movie(ia.search_movie(movie_name), movie_name, release_year)
             if movie is None:
