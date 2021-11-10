@@ -62,6 +62,7 @@ class MovieAnalyzer():
             print("progress idx: " + str(idx))
             movie = self._find_right_movie(ia.search_movie(movie_name), movie_name, release_year)
             if movie is None:
+                movie_info_df = movie_info_df.append({}, ignore_index=True)
                 continue
             movie_imdb_info = ia.get_movie(movie.movieID)
             movie_row = {}
@@ -233,6 +234,12 @@ class NetflixProcessor():
         movie_titles_df = data[(data["type"] == "Movie") & (data["country"] == "United States") & (data["release_year"] > 2015)]
         movie_titles_df.to_csv("../data/netflix_movies.csv", index=False)
 
+    def find_highly_rated_movies(self):
+        movie_info_names = pd.read_csv("../data/netflix_movie_info.csv")["Title"].tolist()
+        orig_movie_titles = pd.read_csv("../data/netflix_movies.csv")["title"].tolist()
+        diff = set(movie_info_names).difference(set(orig_movie_titles))
+        print(diff)
+
 def analyze_eslnotes():
     # Analyze movies from eslnotes
     movie_list          = "../data/eslnotes_movie_list.txt"
@@ -248,7 +255,8 @@ def analyze_eslnotes():
 def process_netflix_file():
     data_path = "../data/netflix_titles.csv"
     processor = NetflixProcessor(data_path)
-    processor.extract_movie_titles()
+    #processor.extract_movie_titles()
+    processor.find_highly_rated_movies()
 
 def analyze_netflix():
     # Analyze movies from eslnotes
