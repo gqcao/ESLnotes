@@ -33,8 +33,8 @@ class MovieIdentifier():
         tst_features                = normalize_feature(tst_features.toarray())  # Normalize the feature
         oneclass_model              = IsolationForest(n_estimators=5, random_state=0).fit(trn_features)
         tst_labels                  = oneclass_model.predict(tst_features)
-        tst_movie_names             = pd.read_csv(self._tst_movie_filename)["title"]
-        writestr("../data/recommended_movies.txt", tst_movie_names.iloc[tst_labels == 1].tolist())
+        tst_movie_info              = pd.read_csv(self._tst_movie_filename)
+        return tst_movie_info.iloc[tst_labels == 1]
 
 def gen_ESLnotes_features():
     movie_list = "../data/eslnotes_movie_list.txt"
@@ -52,10 +52,13 @@ def gen_netflix_features():
 
 def recommend_new_eslnotes_movies():
     trn_feature_filename    = "../data/eslnotes_feature.txt"
-    tst_feature_filename    = "../data/netflix_feature.txt"
-    tst_movie_filename      = "../data/netflix_movies.csv"
+    tst_feature_filename    = "../data/highly_rated_netflix_feature.txt"
+    tst_movie_filename      = "../data/highly_rated_netflix_movie_info.csv"
     eslnotes_identifier     = MovieIdentifier(trn_feature_filename, tst_feature_filename, tst_movie_filename)
     eslnotes_identifier.find_similar_movies()
+    recommeded_movie_info = eslnotes_identifier.find_similar_movies()
+    recommeded_movie_info = recommeded_movie_info[recommeded_movie_info["Year"]>2015] 
+    recommeded_movie_info.to_csv("../data/recommended_movies.txt", index=False)
 
 if __name__ == "__main__":
     #gen_ESLnotes_features()

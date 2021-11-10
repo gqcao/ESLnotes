@@ -38,21 +38,20 @@ class MovieAnalyzer():
     def _find_right_movie(self, movies, orig_movie_name, release_year=None):
         if len(movies) == 0:
             return None
-        if movies[0]["title"] != orig_movie_name:
-            if release_year:
-                for movie in movies:
-                    if movie.get("year") == release_year:
-                        return movie
-            else:
-                print("Original name: " + orig_movie_name)
-                for idx, movie in enumerate(movies):
-                    print("Movie number: ", idx)
-                    print(movie.get("title"))
-                    print(movie.get("year"))
-                chose_idx = int(input("Choosing movie idx: "))
-                return movies[chose_idx]
-            print("None found and use zero index..")
-        return movies[0]
+        if release_year:
+            for movie in movies:
+                if movie.get("year") == release_year:
+                    return movie
+            print("None found..")
+            return None
+        else:
+            print("Original name: " + orig_movie_name)
+            for idx, movie in enumerate(movies):
+                print("Movie number: ", idx)
+                print(movie.get("title"))
+                print(movie.get("year"))
+            chose_idx = int(input("Choosing movie idx: "))
+            return movies[chose_idx]
 
     def get_movie_info(self):
         movie_names = self._movie_names 
@@ -257,7 +256,7 @@ def process_netflix_file():
     data_path = "../data/netflix_titles.csv"
     processor = NetflixProcessor(data_path)
     #processor.extract_movie_titles()
-    highly_rated_movies, highly_rated_movie_features = processor.find_highly_rated_movies(7)
+    highly_rated_movies, highly_rated_movie_features = processor.find_highly_rated_movies(7.5)
     highly_rated_movies["IMDb_ID"] = highly_rated_movies["IMDb_ID"].astype(int)
     highly_rated_movies["Year"] = highly_rated_movies["Year"].astype(int)
     highly_rated_movies.to_csv("../data/highly_rated_netflix_movie_info.csv", index=False)
@@ -276,5 +275,5 @@ def analyze_netflix():
 
 if __name__=="__main__":
     #analyze_eslnotes()
-    process_netflix_file()
-    #analyze_netflix()
+    #process_netflix_file()
+    analyze_netflix()
