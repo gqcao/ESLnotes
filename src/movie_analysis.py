@@ -235,9 +235,9 @@ class NetflixProcessor():
 
     def find_highly_rated_movies(self, rating_thresh=6.5):
         movie_info                  = pd.read_csv("../data/netflix_movie_info.csv")
-        highly_rated_movies         = movie_info[movie_info["Rating"] > rating_thresh]
+        highly_rated_movies         = movie_info[(movie_info["Rating"] > rating_thresh) & (movie_info["Genre"].str.contains("Documentary") == False)]
         features, labels            = load_svmlight_file("../data/netflix_feature.txt")
-        highly_rated_movie_features = features[movie_info["Rating"] > rating_thresh, :]
+        highly_rated_movie_features = features[(movie_info["Rating"] > rating_thresh) & (movie_info["Genre"].str.contains("Documentary") == False), :]
         return highly_rated_movies, highly_rated_movie_features
 
 def analyze_eslnotes():
@@ -249,7 +249,7 @@ def analyze_eslnotes():
     eslnotes_analyzer = MovieAnalyzer(movie_names, movie_info, feature_filename)
     #movie_info_df,  plots = eslnotes_analyzer.get_movie_info()
     #movie_info_df.to_csv("../data/eslnotes_movie_info.csv", index=False)
-    #writestr("../data/elnotes_plots.txt", plots)
+    #writestr("../data/eslnotes_plots.txt", plots)
     eslnotes_analyzer.analyze_movies()
 
 def process_netflix_file():
@@ -275,5 +275,5 @@ def analyze_netflix():
 
 if __name__=="__main__":
     #analyze_eslnotes()
-    #process_netflix_file()
-    analyze_netflix()
+    process_netflix_file()
+    #analyze_netflix()
