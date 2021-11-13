@@ -31,7 +31,7 @@ class MovieIdentifier():
         trn_features                = normalize_feature(trn_features.toarray())  # Normalize the feature 
         tst_features, tst_labels    = load_svmlight_file(self._tst_feature_filename)
         tst_features                = normalize_feature(tst_features.toarray())  # Normalize the feature
-        oneclass_model              = IsolationForest(n_estimators=10,max_features=50, random_state=0).fit(trn_features)
+        oneclass_model              = IsolationForest(n_estimators=20,max_features=50, random_state=0).fit(trn_features)
         tst_labels                  = oneclass_model.predict(tst_features)
         tst_movie_info              = pd.read_csv(self._tst_movie_filename)
         return tst_movie_info.iloc[tst_labels == 1]
@@ -55,7 +55,6 @@ def recommend_new_eslnotes_movies():
     tst_feature_filename    = "../data/highly_rated_netflix_feature.txt"
     tst_movie_filename      = "../data/highly_rated_netflix_movie_info.csv"
     eslnotes_identifier     = MovieIdentifier(trn_feature_filename, tst_feature_filename, tst_movie_filename)
-    eslnotes_identifier.find_similar_movies()
     recommeded_movie_info = eslnotes_identifier.find_similar_movies()
     recommeded_movie_info.to_csv("../data/recommended_movies.txt", index=False)
 

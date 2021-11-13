@@ -228,9 +228,9 @@ class NetflixProcessor():
     def __init__(self, data_path):
         self._data_path = data_path
 
-    def extract_movie_titles(self):
+    def extract_movie_titles(self, thresh_year):
         data = pd.read_csv(self._data_path)
-        movie_titles_df = data[(data["type"] == "Movie") & (data["country"] == "United States") & (data["release_year"] > 2015)]
+        movie_titles_df = data[(data["type"] == "Movie") & (data["country"] == "United States") & (data["release_year"] > thresh_year) & (data["listed_in"].str.contains("Documentaries") == False)]
         movie_titles_df.to_csv("../data/netflix_movies.csv", index=False)
 
     def find_highly_rated_movies(self, rating_thresh=6.5):
@@ -255,7 +255,7 @@ def analyze_eslnotes():
 def process_netflix_file():
     data_path = "../data/netflix_titles.csv"
     processor = NetflixProcessor(data_path)
-    #processor.extract_movie_titles()
+    #processor.extract_movie_titles(2010)
     highly_rated_movies, highly_rated_movie_features = processor.find_highly_rated_movies(7.5)
     highly_rated_movies["IMDb_ID"] = highly_rated_movies["IMDb_ID"].astype(int)
     highly_rated_movies["Year"] = highly_rated_movies["Year"].astype(int)
